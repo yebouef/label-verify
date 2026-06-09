@@ -30,7 +30,7 @@ compare.ts (deterministic field comparison)  ──►  approve / review / rejec
 
 The decision I'm most deliberate about: the model's only job is to **read** the label and return its fields verbatim through a structured tool call. Every accept/reject decision is made by deterministic, unit-tested code in `lib/compare.ts` and `lib/warning.ts`. I did it this way so the compliance logic stays auditable — you can read exactly why a label passed or failed — and so the model can't "helpfully" correct a mismatch that an agent actually needs to see.
 
-Batch mode (`/api/screen`) runs the self-contained checks that don't need per-label application data — Government Warning, presence of required fields, legibility — so a 200-label importer dump gets triaged down to the handful that need a close look.
+Batch mode (`/api/screen`) runs the self-contained checks that don't need per-label application data — Government Warning, presence of required fields, legibility — so a 200-label importer dump gets triaged down to the handful that need a close look. The results table doesn't just say "problem"; a "What needs attention" column lists the specific reason for each flag (e.g. *Net Contents: missing from the label*, or *Government Warning: must appear in all capital letters*) so the agent knows exactly what to fix.
 
 ## Project layout
 
@@ -94,7 +94,7 @@ The API routes run on the Node.js runtime as serverless functions, so the key st
 
 **Latency.** The single-label path is one vision call plus local comparison, which lands inside the ~5-second target the team set after their earlier vendor pilot. Batch fans out across images with capped concurrency so each individual response stays fast and results stream in as they finish.
 
-**Accessibility and usability.** I designed this for the least tech-comfortable agent on the team, not the most. Large touch targets, status colors always paired with a text label (never color alone), keyboard-operable upload zones, `aria-live` result regions, and plain-language verdicts — aimed at the "clean, obvious, no hunting for buttons" benchmark and a team where half the agents are over 50.
+**Accessibility and usability.** I designed this for the least tech-comfortable agent on the team, not the most. The single-label flow is a guided three-step sequence (enter the application details → add the label photo → check the label) so there's only ever one obvious next action. Results are large and icon-led — a clear ✓/!/✕ verdict banner with plain wording, then one card per field showing the application value next to the label value and a plain-English reason. Throughout: large touch targets, helper text under every field, status colors always paired with a text label (never color alone), keyboard-operable upload zones, `aria-live` result regions, and friendly error messages — aimed at the "clean, obvious, no hunting for buttons" benchmark and a team where half the agents are over 50.
 
 ## AI prompts used
 
