@@ -71,12 +71,18 @@ export function BatchView() {
   );
 
   return (
-    <div className="grid" style={{ gridTemplateColumns: "1fr" }}>
-      <section className="panel">
-        <h2>Batch screening</h2>
-        <p style={{ marginTop: 0, color: "var(--muted)" }}>
-          Upload many labels at once. Each is screened for the mandatory Government Warning,
-          required fields, and image quality, then flagged so agents look at the problem ones first.
+    <div>
+      <section className="step">
+        <div className="step-head">
+          <span className="step-num">1</span>
+          <div>
+            <h2>Upload a batch of labels</h2>
+            <p className="hint">For when an importer sends many applications at once.</p>
+          </div>
+        </div>
+        <p style={{ marginTop: 0, color: "var(--muted)", fontSize: 16 }}>
+          Each label is screened for the mandatory Government Warning, required fields, and
+          image quality, then flagged so you look at the problem ones first.
         </p>
         <div
           className="dropzone"
@@ -87,8 +93,8 @@ export function BatchView() {
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
         >
-          <strong>Click to choose</strong> or drag a folder of label images here
-          <p>{files.length > 0 ? `${files.length} image${files.length === 1 ? "" : "s"} ready` : "JPEG, PNG, or WebP"}</p>
+          <div className="big">Click to choose photos</div>
+          <p>{files.length > 0 ? `${files.length} image${files.length === 1 ? "" : "s"} ready` : "or drag them here — JPEG, PNG, or WebP"}</p>
           <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={(e) => addFiles(e.target.files)} />
         </div>
         <button className="primary" onClick={run} disabled={busy || files.length === 0}>
@@ -97,8 +103,14 @@ export function BatchView() {
       </section>
 
       {rows.length > 0 ? (
-        <section className="panel">
-          <h2>Results</h2>
+        <section className="step">
+          <div className="step-head">
+            <span className="step-num">2</span>
+            <div>
+              <h2>Results</h2>
+              <p className="hint">Flagged labels need a closer look.</p>
+            </div>
+          </div>
           <p className="chips">
             {counts.approve ? <span className="pill approve">{counts.approve} Pass</span> : null}{" "}
             {counts.review ? <span className="pill review">{counts.review} Review</span> : null}{" "}
@@ -111,8 +123,7 @@ export function BatchView() {
                 <th>File</th>
                 <th>Status</th>
                 <th>Brand</th>
-                <th>Warning</th>
-                <th>Notes</th>
+                <th>What needs attention</th>
               </tr>
             </thead>
             <tbody>
@@ -122,19 +133,37 @@ export function BatchView() {
                     <tr key={i}>
                       <td>{r.filename}</td>
                       <td><span className="pill error">Error</span></td>
-                      <td colSpan={3}>{r.error}</td>
+                      <td colSpan={2}>{r.error}</td>
                     </tr>
                   );
                 }
                 const res = r.result!;
-                const warn = res.checks.find((c) => c.field === "governmentWarning");
+                // List every check that isn't a clean pass, with the
+                // specific reason — so the agent knows exactly what to fix.
+                const issues = res.checks.filter((c) => c.status !== "pass");
                 return (
                   <tr key={i}>
                     <td>{r.filename}</td>
                     <td><span className={`pill ${res.verdict}`}>{VERDICT_PILL[res.verdict]}</span></td>
                     <td>{res.extracted.brandName ?? "—"}</td>
-                    <td>{warn?.status === "pass" ? "OK" : warn?.status === "warning" ? "Check" : "Problem"}</td>
-                    <td>{res.summary}</td>
+                    <td>
+                      {res.legibility === "unreadable" ? (
+                        <div className="issue warn">
+                          <strong>Image unreadable</strong> — request a clearer photo.
+                          {res.extracted.notes ? ` (${res.extracted.notes})` : ""}
+                        </div>
+                      ) : issues.length === 0 ? (
+                        <span className="issue ok">All required elements present.</span>
+                      ) : (
+                        <ul className="issue-list">
+                          {issues.map((c) => (
+                            <li key={c.field} className={`issue ${c.status === "fail" ? "bad" : "warn"}`}>
+                              <strong>{c.label}:</strong> {c.message}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

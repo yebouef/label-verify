@@ -9,8 +9,10 @@ export default function Home() {
   return (
     <>
       <header className="app">
-        <h1>Label Verification</h1>
-        <p>Check alcohol beverage labels against application data — TTB compliance prototype</p>
+        <div className="inner">
+          <h1>Label Verification</h1>
+          <p>Check alcohol beverage labels against application data — TTB compliance prototype</p>
+        </div>
       </header>
       <main>
         <div className="tabs" role="tablist" aria-label="Mode">
